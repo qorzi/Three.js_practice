@@ -18,6 +18,9 @@ export default function App() {
     <div className='Main'>
       <Canvas
         style={{ width: "100vw", height: "100vh" }}
+        // shadowMap prop must be set to true on the Canvas. And
+        // you must set castShadow to true on all lights casting shadows.
+        shadowMap
         // camera={{near: 0.1, far: 1000, zoom: 100, position: [0, 40, 300]}}  
       >
         <Effects disableGamma>
@@ -26,10 +29,34 @@ export default function App() {
         </Effects>
 
         <ambientLight intensity={1} />
-        <directionalLight position={[-1,0.5,1]} intensity={0.5} />
+
+        <directionalLight
+          castShadow 
+          intensity={0.5}
+          position={[-1,0.5,1]}
+          shadow-mapSize-height={512}
+          shadow-mapSize-width={512}
+        />
+
+        {/* <spotLight
+          castShadow
+          intensity={2}
+          args={[0xff0000, 2, 100]}
+          position={[1, 2, 1]}
+        />
+
+        <spotLight
+          castShadow
+          intensity={2}
+          args={["blue", 2, 100]}
+          position={[-1, 2, 1]}
+        /> */}
+
+      <pointLight position={[10, 0, 20]} color="white" intensity={1} />
+      <pointLight position={[0, 10, 0]} intensity={1} />
 
         <OrthographicCamera makeDefault zoom={50} position={[60, 60, 200]} />
-        <OrbitControls minZoom={10} maxZoom={50} enabled={false} />
+        <OrbitControls minZoom={10} maxZoom={50} enabled={true} />
 
         <Selection>
           <EffectComposer multisampling={8} autoClear={false}>
@@ -40,20 +67,22 @@ export default function App() {
           </EffectComposer>
 
           <MyBox isDragging={isDragging} setIsDragging={setIsDragging} floorPlane={floorPlane} />
-          <Shape position={[1, 0, 0.1]} rotation={[-Math.PI / 2, 0, 0]} />
+          <Shape position={[1, 1, 0]} rotation={[-Math.PI / 2, 0, 0]} />
         </Selection>
         <mesh
           onPointerDown={console.log}
           rotation={[-Math.PI / 2, 0, 0]}
           position={[0, -0.1, 0]}
+          receiveShadow
         >
-          <planeBufferGeometry attach="geometry" args={[40, 40]} />
+          <planeBufferGeometry attach="geometry" args={[40, 40]} receiveShadow />
           <meshStandardMaterial attach="material" color="#ccc" side={THREE.DoubleSide} />
         </mesh>
 
         <planeHelper args={[floorPlane, 5, "red"]} />
 
         <gridHelper args={[100, 100]} />
+        
       </Canvas>
     </div>
   );
@@ -101,6 +130,8 @@ const MyBox = ({isDragging, setIsDragging, floorPlane, ...props}) => {
       rotation={[Math.PI / 6, 1, 0]}
       position={pos}
       {...bind()}
+      castShadow
+      receiveShadow
       >
         <dodecahedronBufferGeometry attach="geometry" args={[0.6, 0]} />
         {/* Now, in order to get selective bloom we simply crank colors out of
@@ -123,13 +154,15 @@ const Shape = ({...props }) => {
       ref={mesh}
       onPointerOver={() => hover(true)}
       onPointerOut={() => hover(false)}
+      castShadow
+      receiveShadow
       >
-        <circleGeometry args={[0.6, 64]} />
+        <boxGeometry attach="geometry" args={[1, 1, 1]} />
         {/* Now, in order to get selective bloom we simply crank colors out of
           their natural spectrum. Where colors are normally defined between 0 - 1 we push them
           way out of range, into a higher defintion (HDR). What previously was [1, 1, 1] now could
           for instance be [10, 10, 10]. This requires that toneMapping is off, or it clamps to 1 */}
-        <meshBasicMaterial color={hovered ? [3, 4, 0.5] : 'orange'} toneMapped={false} />
+        <meshStandardMaterial attach="material" color={hovered ? [3, 4, 0.5] : 'orange'} toneMapped={false} />
       </mesh>
     </Select>
   )
